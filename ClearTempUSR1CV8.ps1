@@ -1,100 +1,100 @@
-# Путь к папке для очистки
+# РџСѓС‚СЊ Рє РїР°РїРєРµ РґР»СЏ РѕС‡РёСЃС‚РєРё
 $folderPath = "D:\Users\USR1CV8\AppData\Local\Temp"
 
-# Проверка существования папки
+# РџСЂРѕРІРµСЂРєР° СЃСѓС‰РµСЃС‚РІРѕРІР°РЅРёСЏ РїР°РїРєРё
 if (-not (Test-Path $folderPath)) {
-    Write-Host "Папка $folderPath не найдена!" -ForegroundColor Red
-    $logMessage = "$(Get-Date): Папка $folderPath не найдена!"
+    Write-Host "РџР°РїРєР° $folderPath РЅРµ РЅР°Р№РґРµРЅР°!" -ForegroundColor Red
+    $logMessage = "$(Get-Date): РџР°РїРєР° $folderPath РЅРµ РЅР°Р№РґРµРЅР°!"
     Add-Content -Path "C:\Logs\ClearTempLog.txt" -Value $logMessage
     exit
 }
 
-# Счетчики для статистики
+# РЎС‡РµС‚С‡РёРєРё РґР»СЏ СЃС‚Р°С‚РёСЃС‚РёРєРё
 $filesCount = 0
 $foldersCount = 0
 $errorsCount = 0
 $errorDetails = @()
 
-# Функция для удаления файлов и папок старше 1 дня
+# Р¤СѓРЅРєС†РёСЏ РґР»СЏ СѓРґР°Р»РµРЅРёСЏ С„Р°Р№Р»РѕРІ Рё РїР°РїРѕРє СЃС‚Р°СЂС€Рµ 1 РґРЅСЏ
 function Remove-OldItems {
     param([string]$Path)
     
     try {
-        # Удаление файлов старше 1 дня
+        # РЈРґР°Р»РµРЅРёРµ С„Р°Р№Р»РѕРІ СЃС‚Р°СЂС€Рµ 1 РґРЅСЏ
         $files = Get-ChildItem -Path $Path -File | Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-1) }
         foreach ($file in $files) {
             try {
                 Remove-Item -Path $file.FullName -Force -ErrorAction Stop
                 $script:filesCount++
-                Write-Host "Удален файл: $($file.FullName)" -ForegroundColor Green
+                Write-Host "РЈРґР°Р»РµРЅ С„Р°Р№Р»: $($file.FullName)" -ForegroundColor Green
             }
             catch {
                 $script:errorsCount++
-                $script:errorDetails += "$(Get-Date): Ошибка удаления файла $($file.FullName) - $($_.Exception.Message)"
-                Write-Host "Ошибка удаления файла: $($file.FullName)" -ForegroundColor Red
+                $script:errorDetails += "$(Get-Date): РћС€РёР±РєР° СѓРґР°Р»РµРЅРёСЏ С„Р°Р№Р»Р° $($file.FullName) - $($_.Exception.Message)"
+                Write-Host "РћС€РёР±РєР° СѓРґР°Р»РµРЅРёСЏ С„Р°Р№Р»Р°: $($file.FullName)" -ForegroundColor Red
             }
         }
         
-        # Удаление папок старше 1 дня (рекурсивно)
+        # РЈРґР°Р»РµРЅРёРµ РїР°РїРѕРє СЃС‚Р°СЂС€Рµ 1 РґРЅСЏ (СЂРµРєСѓСЂСЃРёРІРЅРѕ)
         $folders = Get-ChildItem -Path $Path -Directory | Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-1) }
         foreach ($folder in $folders) {
             try {
                 Remove-Item -Path $folder.FullName -Force -Recurse -ErrorAction Stop
                 $script:foldersCount++
-                Write-Host "Удалена папка: $($folder.FullName)" -ForegroundColor Yellow
+                Write-Host "РЈРґР°Р»РµРЅР° РїР°РїРєР°: $($folder.FullName)" -ForegroundColor Yellow
             }
             catch {
                 $script:errorsCount++
-                $script:errorDetails += "$(Get-Date): Ошибка удаления папки $($folder.FullName) - $($_.Exception.Message)"
-                Write-Host "Ошибка удаления папки: $($folder.FullName)" -ForegroundColor Red
+                $script:errorDetails += "$(Get-Date): РћС€РёР±РєР° СѓРґР°Р»РµРЅРёСЏ РїР°РїРєРё $($folder.FullName) - $($_.Exception.Message)"
+                Write-Host "РћС€РёР±РєР° СѓРґР°Р»РµРЅРёСЏ РїР°РїРєРё: $($folder.FullName)" -ForegroundColor Red
                 
-                # Если не удалось удалить папку целиком, пытаемся очистить ее содержимое
+                # Р•СЃР»Рё РЅРµ СѓРґР°Р»РѕСЃСЊ СѓРґР°Р»РёС‚СЊ РїР°РїРєСѓ С†РµР»РёРєРѕРј, РїС‹С‚Р°РµРјСЃСЏ РѕС‡РёСЃС‚РёС‚СЊ РµРµ СЃРѕРґРµСЂР¶РёРјРѕРµ
                 try {
-                    Write-Host "Попытка очистки содержимого папки: $($folder.FullName)" -ForegroundColor Magenta
+                    Write-Host "РџРѕРїС‹С‚РєР° РѕС‡РёСЃС‚РєРё СЃРѕРґРµСЂР¶РёРјРѕРіРѕ РїР°РїРєРё: $($folder.FullName)" -ForegroundColor Magenta
                     Remove-OldItems -Path $folder.FullName
                 }
                 catch {
-                    $script:errorDetails += "$(Get-Date): Ошибка очистки папки $($folder.FullName) - $($_.Exception.Message)"
+                    $script:errorDetails += "$(Get-Date): РћС€РёР±РєР° РѕС‡РёСЃС‚РєРё РїР°РїРєРё $($folder.FullName) - $($_.Exception.Message)"
                 }
             }
         }
     }
     catch {
         $script:errorsCount++
-        $script:errorDetails += "$(Get-Date): Общая ошибка в пути $Path - $($_.Exception.Message)"
+        $script:errorDetails += "$(Get-Date): РћР±С‰Р°СЏ РѕС€РёР±РєР° РІ РїСѓС‚Рё $Path - $($_.Exception.Message)"
     }
 }
 
-# Запуск очистки
-Write-Host "Начало очистки папки: $folderPath" -ForegroundColor Cyan
-Write-Host "Время: $(Get-Date)" -ForegroundColor Cyan
+# Р—Р°РїСѓСЃРє РѕС‡РёСЃС‚РєРё
+Write-Host "РќР°С‡Р°Р»Рѕ РѕС‡РёСЃС‚РєРё РїР°РїРєРё: $folderPath" -ForegroundColor Cyan
+Write-Host "Р’СЂРµРјСЏ: $(Get-Date)" -ForegroundColor Cyan
 Write-Host "=" * 50
 
 Remove-OldItems -Path $folderPath
 
-# Логирование
+# Р›РѕРіРёСЂРѕРІР°РЅРёРµ
 $logPath = "C:\Logs\ClearTempLog.txt"
 if (-not (Test-Path "C:\Logs")) { 
     New-Item -ItemType Directory -Path "C:\Logs" -Force 
 }
 
-$logMessage = "$(Get-Date): Очистка папки $folderPath. Удалено файлов: $filesCount, папок: $foldersCount, ошибок: $errorsCount"
+$logMessage = "$(Get-Date): РћС‡РёСЃС‚РєР° РїР°РїРєРё $folderPath. РЈРґР°Р»РµРЅРѕ С„Р°Р№Р»РѕРІ: $filesCount, РїР°РїРѕРє: $foldersCount, РѕС€РёР±РѕРє: $errorsCount"
 Add-Content -Path $logPath -Value $logMessage
 
-# Добавление деталей ошибок в лог
+# Р”РѕР±Р°РІР»РµРЅРёРµ РґРµС‚Р°Р»РµР№ РѕС€РёР±РѕРє РІ Р»РѕРі
 if ($errorsCount -gt 0) {
-    Add-Content -Path $logPath -Value "Детали ошибок:"
+    Add-Content -Path $logPath -Value "Р”РµС‚Р°Р»Рё РѕС€РёР±РѕРє:"
     $errorDetails | ForEach-Object { Add-Content -Path $logPath -Value $_ }
 }
 
-# Вывод результатов
+# Р’С‹РІРѕРґ СЂРµР·СѓР»СЊС‚Р°С‚РѕРІ
 Write-Host "=" * 50
-Write-Host "Очистка завершена!" -ForegroundColor Cyan
-Write-Host "Удалено файлов: $filesCount" -ForegroundColor Green
-Write-Host "Удалено папок: $foldersCount" -ForegroundColor Yellow
-Write-Host "Ошибок: $errorsCount" -ForegroundColor $(if ($errorsCount -gt 0) { "Red" } else { "Green" })
-Write-Host "Всего удалено объектов: $($filesCount + $foldersCount)" -ForegroundColor Cyan
+Write-Host "РћС‡РёСЃС‚РєР° Р·Р°РІРµСЂС€РµРЅР°!" -ForegroundColor Cyan
+Write-Host "РЈРґР°Р»РµРЅРѕ С„Р°Р№Р»РѕРІ: $filesCount" -ForegroundColor Green
+Write-Host "РЈРґР°Р»РµРЅРѕ РїР°РїРѕРє: $foldersCount" -ForegroundColor Yellow
+Write-Host "РћС€РёР±РѕРє: $errorsCount" -ForegroundColor $(if ($errorsCount -gt 0) { "Red" } else { "Green" })
+Write-Host "Р’СЃРµРіРѕ СѓРґР°Р»РµРЅРѕ РѕР±СЉРµРєС‚РѕРІ: $($filesCount + $foldersCount)" -ForegroundColor Cyan
 
 if ($errorsCount -gt 0) {
-    Write-Host "Некоторые файлы/папки не были удалены. Проверьте лог для деталей." -ForegroundColor Red
+    Write-Host "РќРµРєРѕС‚РѕСЂС‹Рµ С„Р°Р№Р»С‹/РїР°РїРєРё РЅРµ Р±С‹Р»Рё СѓРґР°Р»РµРЅС‹. РџСЂРѕРІРµСЂСЊС‚Рµ Р»РѕРі РґР»СЏ РґРµС‚Р°Р»РµР№." -ForegroundColor Red
 }
